@@ -13,7 +13,7 @@ import net.minecraft.util.Identifier;
 import static modpackChecker.ModpackChecker.*;
 
 public class NetworkHandler {
-    public static final Identifier VERSION_CHECK_CHANNEL = Identifier.of("modpack-checker", "version_check");
+    public static final Identifier VERSION_CHECK_CHANNEL = new Identifier("modpack-checker", "version_check");
 
     public static void register() {
         LOGGER.info("Registering network handlers");

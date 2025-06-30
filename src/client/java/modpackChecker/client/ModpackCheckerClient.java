@@ -20,7 +20,7 @@ public class ModpackCheckerClient implements ClientModInitializer {
     public static final String MOD_ID = "ModpackCheckerClient";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     
-    private static final Identifier VERSION_CHECK_CHANNEL = Identifier.of("modpack-checker", "version_check");
+    private static final Identifier VERSION_CHECK_CHANNEL = new Identifier("modpack-checker", "version_check");
 
     @Override
     public void onInitializeClient() {
