@@ -8,6 +8,7 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 - **Easy Configuration**: Simple TOML files for server and client configuration
 - **Automatic Disconnection**: Players with incorrect versions are automatically disconnected with helpful messages
 - **Vanilla Reload Integration**: Configuration reloads automatically when using vanilla's `/reload` command
+- **Development Mode**: Use version "0.0.0" to always allow joining (useful for development)
 
 ## Installation
 
@@ -36,18 +37,18 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 enable = true
 
 # Expected modpack version that clients must have
-expected_version = "1.2.3"
+expected_version = "1.0.0"
 
 # Kick messages for different scenarios
 [messages]
 # Message shown when client doesn't have the mod installed
-no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+no_mod = "Please install the Modpack: <your-modpack-link>"
 
 # Message shown when client has wrong version (use {version} as placeholder)
-wrong_version = "❌ Please install modpack version {version}: https://triibu.tech/minecraft"
+wrong_version = "Please install modpack version {version}: <your-modpack-link+version>"
 
 # Message shown when there's a server configuration error
-server_error = "❌ Server configuration error. Please contact an administrator."
+server_error = "Server configuration error. Please contact an administrator." 
 ```
 
 ### Client Configuration (`config/modpack-checker-client.toml`)
@@ -56,7 +57,8 @@ server_error = "❌ Server configuration error. Please contact an administrator.
 # Modpack Checker Client Configuration
 
 # Current modpack version - this should match the server's expected version
-version = "1.2.3"
+# Use "0.0.0" for development (always allows joining)
+version = "1.0.0"
 ```
 
 ## How It Works
@@ -64,7 +66,7 @@ version = "1.2.3"
 1. When a player connects, the server sends a version check request
 2. If the client has the mod installed, it reads its configuration file and sends the version back
 3. The server compares the client's version with the expected version from its configuration
-4. If versions don't match, the player is disconnected with a helpful message
+4. If versions don't match (and client doesn't have dev version "0.0.0"), the player is disconnected with a helpful message
 
 ## Configuration Reload
 
@@ -72,9 +74,9 @@ The mod automatically reloads its configuration when you use the vanilla `/reloa
 
 ## Error Messages
 
-- **No Mod**: "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
-- **Wrong Version**: "❌ Please install modpack version X.X.X: https://triibu.tech/minecraft"
-- **Server Error**: "❌ Server configuration error. Please contact an administrator."
+- **No Mod**: "Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+- **Wrong Version**: "Please install modpack version X.X.X: https://triibu.tech/minecraft"
+- **Server Error**: "Server configuration error. Please contact an administrator."
 
 ## Configuration Options
 
@@ -88,7 +90,11 @@ The mod automatically reloads its configuration when you use the vanilla `/reloa
 
 ### Client Options
 
-- `version` - The current modpack version
+- `version` - The current modpack version (use "0.0.0" for development mode)
+
+## Development Mode
+
+For development purposes, you can set the client version to "0.0.0". Clients with this version will always be allowed to join any server, regardless of the server's expected version. This is useful when developing modpacks or testing configurations.
 
 ## Singleplayer
 
@@ -99,7 +105,7 @@ The mod automatically detects singleplayer environments and disables version che
 - Uses Fabric's login networking for lightweight version verification
 - No complex modlist comparison or checksum calculations
 - Minimal network overhead
-- Compatible with Fabric API 0.92.2+ for Minecraft 1.20.1
+- Compatible with Fabric API 0.96.0+ for Minecraft 1.21.1
 - Configuration files are automatically created with sensible defaults
 - Uses night-config:toml (Licensed under LGPL) for robust TOML configuration parsing
 - Environment-aware: Only generates and loads appropriate config files for the current environment

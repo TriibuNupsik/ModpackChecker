@@ -18,7 +18,8 @@ import static modpackChecker.ModpackChecker.LOGGER;
 
 public class ConfigManager {
     // Default configuration values
-    private static final String DEFAULT_VERSION = "1.2.3";
+    private static final String DEFAULT_VERSION = "1.0.0";
+    private static final String DEV_VERSION = "0.0.0";
     
     // Use standard server config folder
     private static final Path CONFIG_DIR = FabricLoader.getInstance().getGameDir().resolve("config");
@@ -31,12 +32,12 @@ public class ConfigManager {
     // Server configuration
     public static boolean enable = true;
     public static String expectedVersion = DEFAULT_VERSION;
-    public static String noModMessage = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft";
-    public static String wrongVersionMessage = "❌ Please install modpack version {version}: https://triibu.tech/minecraft";
-    public static String serverErrorMessage = "❌ Server configuration error. Please contact an administrator.";
+    public static String noModMessage = "Please install the Modpack: <your-modpack-link>";
+    public static String wrongVersionMessage = "Please install modpack version {version}: <your-modpack-link+version>";
+    public static String serverErrorMessage = "Server configuration error. Please contact an administrator.";
     
     // Client configuration
-    public static String clientVersion = DEFAULT_VERSION;
+    public static String clientVersion = DEV_VERSION;
     
     public static void init(boolean isClient) {
         isClientEnvironment = isClient;
@@ -85,8 +86,9 @@ public class ConfigManager {
                     # Modpack Checker Client Configuration
                     
                     # Current modpack version - this should match the server's expected version
+                    # Use "0.0.0" for development (always allows joining)
                     version = "%s"
-                    """.formatted(DEFAULT_VERSION);
+                    """.formatted(DEV_VERSION);
                 Files.writeString(CLIENT_CONFIG_PATH, defaultClientConfig);
                 LOGGER.info("Created default client configuration file");
             }
@@ -105,13 +107,13 @@ public class ConfigManager {
                     # Kick messages for different scenarios
                     [messages]
                     # Message shown when client doesn't have the mod installed
-                    no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+                    no_mod = "Please install the ModpackChecker mod: https://triibu.tech/minecraft"
                     
                     # Message shown when client has wrong version (use {version} as placeholder)
-                    wrong_version = "❌ Please install modpack version {version}: https://triibu.tech/minecraft"
+                    wrong_version = "Please install modpack version {version}: https://triibu.tech/minecraft"
                     
                     # Message shown when there's a server configuration error
-                    server_error = "❌ Server configuration error. Please contact an administrator."
+                    server_error = "Server configuration error. Please contact an administrator."
                     """.formatted(DEFAULT_VERSION);
                 Files.writeString(SERVER_CONFIG_PATH, defaultServerConfig);
                 LOGGER.info("Created default server configuration file");
@@ -163,5 +165,19 @@ public class ConfigManager {
     
     public static String formatMessage(String message, String version) {
         return message.replace("{version}", version);
+    }
+    
+    /**
+     * Check if a version is the dev version (always allows joining)
+     */
+    public static boolean isDevVersion(String version) {
+        return DEV_VERSION.equals(version);
+    }
+    
+    /**
+     * Check if versions are compatible (same version or client has dev version)
+     */
+    public static boolean areVersionsCompatible(String clientVersion, String serverVersion) {
+        return clientVersion.equals(serverVersion) || isDevVersion(clientVersion);
     }
 } 
