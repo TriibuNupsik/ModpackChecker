@@ -4,15 +4,15 @@
 enable = true
 
 # Expected modpack version that clients must have
-expected_version = "1.2.3"
+expected_version = "1.0.0"
 
 # Kick messages for different scenarios
 [messages]
 # Message shown when client doesn't have the mod installed
-no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+no_mod = "Please install the Modpack: <your-modpack-link>"
 
 # Message shown when client has wrong version (use {version} as placeholder)
-wrong_version = "❌ Please install modpack version {version}: https://triibu.tech/minecraft"
+wrong_version = "Please install modpack version {version}: <your-modpack-link+version>"
 
 # Message shown when there's a server configuration error
-server_error = "❌ Server configuration error. Please contact an administrator." 
+server_error = "Server configuration error. Please contact an administrator." 

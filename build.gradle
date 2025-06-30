@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = project.mod_version
+version = project.mod_version + "+" + project.mod_mc_version
 group = project.maven_group
 
 base {
@@ -14,7 +14,7 @@ loom {
     splitEnvironmentSourceSets()
 
     mods {
-        "modcheck" {
+        "modpackChecker" {
             sourceSet sourceSets.main
             sourceSet sourceSets.client
         }
@@ -38,20 +38,23 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     
-    // Night Config for TOML configuration
-    modImplementation 'com.electronwill.night-config:toml:3.6.6'
+    // Night Config for TOML configuration - include in final JAR
+    modApi include("com.electronwill.night-config:core:$night_config")
+    modApi include("com.electronwill.night-config:toml:$night_config")
 }
 
 processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
+    inputs.property "mod_mc_version", project.mod_mc_version
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
                 "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+                "loader_version": project.loader_version,
+                "mod_mc_version": project.mod_mc_version
     }
 }
 
