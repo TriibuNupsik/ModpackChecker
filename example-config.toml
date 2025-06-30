@@ -1,5 +1,8 @@
-# Modpack Checker Server Configuration
+# Modpack Checker Configuration
+# This file contains both server and client configuration
 
+# Server Configuration
+[server]
 # Enable or disable modpack version checking
 enable = true
 
@@ -7,7 +10,7 @@ enable = true
 expected_version = "1.2.3"
 
 # Kick messages for different scenarios
-[messages]
+[server.messages]
 # Message shown when client doesn't have the mod installed
 no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
 
@@ -15,4 +18,9 @@ no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecra
 wrong_version = "❌ Please install modpack version {version}: https://triibu.tech/minecraft"
 
 # Message shown when there's a server configuration error
-server_error = "❌ Server configuration error. Please contact an administrator." 
+server_error = "❌ Server configuration error. Please contact an administrator."
+
+# Client Configuration
+[client]
+# Current modpack version - this should match the server's expected version
+version = "1.2.3" 

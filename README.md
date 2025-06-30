@@ -5,34 +5,37 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 ## Features
 
 - **Lightweight Version Checking**: Simple version-based verification instead of complex modlist comparison
-- **Easy Configuration**: Simple TOML files for server and client configuration
+- **Easy Configuration**: Single TOML file with separate server and client sections
 - **Automatic Disconnection**: Players with incorrect versions are automatically disconnected with helpful messages
 - **Vanilla Reload Integration**: Configuration reloads automatically when using vanilla's `/reload` command
-- **No Commands**: All configuration is done through config files
+- **LAN Multiplayer Support**: Works with both dedicated servers and LAN multiplayer
 
 ## Installation
 
 ### Server Setup
 
 1. Install the mod on your server
-2. The configuration file will be automatically created at `config/modpack-checker-server.toml`
+2. The configuration file will be automatically created at `config/modpack-checker.toml`
 3. Edit the configuration file to set your desired settings
 4. Use `/reload` to apply configuration changes
 
 ### Client Setup
 
 1. Include this mod in your modpack
-2. The configuration file will be automatically created at `config/modpack-checker-client.toml`
+2. The configuration file will be automatically created at `config/modpack-checker.toml`
 3. Edit the configuration file to set the current modpack version
 4. Distribute the modpack to your players
 
 ## Configuration
 
-### Server Configuration (`config/modpack-checker-server.toml`)
+### Combined Configuration (`config/modpack-checker.toml`)
 
 ```toml
-# Modpack Checker Server Configuration
+# Modpack Checker Configuration
+# This file contains both server and client configuration
 
+# Server Configuration
+[server]
 # Enable or disable modpack version checking
 enable = true
 
@@ -40,7 +43,7 @@ enable = true
 expected_version = "1.2.3"
 
 # Kick messages for different scenarios
-[messages]
+[server.messages]
 # Message shown when client doesn't have the mod installed
 no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
 
@@ -49,13 +52,9 @@ wrong_version = "❌ Please install modpack version {version}: https://triibu.te
 
 # Message shown when there's a server configuration error
 server_error = "❌ Server configuration error. Please contact an administrator."
-```
 
-### Client Configuration (`config/modpack-checker-client.toml`)
-
-```toml
-# Modpack Checker Client Configuration
-
+# Client Configuration
+[client]
 # Current modpack version - this should match the server's expected version
 version = "1.2.3"
 ```
@@ -66,6 +65,14 @@ version = "1.2.3"
 2. If the client has the mod installed, it reads its configuration file and sends the version back
 3. The server compares the client's version with the expected version from its configuration
 4. If versions don't match, the player is disconnected with a helpful message
+
+## Multiplayer Support
+
+The mod supports different multiplayer environments:
+
+- **Dedicated Servers**: Full modpack checking enabled
+- **LAN Multiplayer**: Modpack checking enabled (detected automatically)
+- **Singleplayer**: Modpack checking disabled to avoid interference
 
 ## Configuration Reload
 
@@ -81,19 +88,19 @@ The mod automatically reloads its configuration when you use the vanilla `/reloa
 
 ### Server Options
 
-- `enable` - Enable or disable version checking (true/false)
-- `expected_version` - The version that clients must have
-- `messages.no_mod` - Message shown when client doesn't have the mod
-- `messages.wrong_version` - Message shown when client has wrong version (use {version} placeholder)
-- `messages.server_error` - Message shown for server configuration errors
+- `server.enable` - Enable or disable version checking (true/false)
+- `server.expected_version` - The version that clients must have
+- `server.messages.no_mod` - Message shown when client doesn't have the mod
+- `server.messages.wrong_version` - Message shown when client has wrong version (use {version} placeholder)
+- `server.messages.server_error` - Message shown for server configuration errors
 
 ### Client Options
 
-- `version` - The current modpack version
+- `client.version` - The current modpack version
 
 ## Singleplayer
 
-The mod automatically detects singleplayer environments and disables version checking to avoid interfering with local gameplay.
+The mod automatically detects singleplayer environments and disables version checking to avoid interfering with local gameplay. LAN multiplayer is detected separately and version checking is enabled for it.
 
 ## Technical Details
 
@@ -102,4 +109,5 @@ The mod automatically detects singleplayer environments and disables version che
 - Minimal network overhead
 - Compatible with Fabric API 0.92.2+ for Minecraft 1.20.1
 - Configuration files are automatically created with sensible defaults
-- Uses night-config:toml for robust TOML configuration parsing
+- Uses night-config:toml (Licensed under LGPL) for robust TOML configuration parsing
+- Single configuration file for both server and client settings

@@ -27,12 +27,21 @@ public class ModpackChecker implements ModInitializer {
     private void onServerStarting(MinecraftServer mcserver) {
         server = mcserver;
         isSingleplayer = server.isSingleplayer();
-        if (isSingleplayer) {
-            // don't register events
+        
+        // Check if this is a LAN server (singleplayer but with network enabled)
+        boolean isLanServer = isSingleplayer && server.isRemote();
+        
+        if (isSingleplayer && !isLanServer) {
+            // True singleplayer - don't register events
             LOGGER.info("Detected SinglePlayer environment, ModpackChecker disabled");
-        } else {
+        } else if (isLanServer) {
+            // LAN multiplayer - enable modpack checking
             NetworkHandler.register();
-            LOGGER.info("ModpackChecker network handlers registered");
+            LOGGER.info("Detected LAN multiplayer environment, ModpackChecker enabled");
+        } else {
+            // Dedicated server - enable modpack checking
+            NetworkHandler.register();
+            LOGGER.info("Detected dedicated server environment, ModpackChecker enabled");
         }
     }
 
@@ -40,13 +49,13 @@ public class ModpackChecker implements ModInitializer {
         // Register reload listener
         server.getCommandManager().getDispatcher().register(
             net.minecraft.server.command.CommandManager.literal("reload")
-                .executes(context -> {
+                    .executes(context -> {
                     // Reload our configuration when vanilla reload is called
                     ConfigManager.reload();
                     context.getSource().sendFeedback(() -> 
                         net.minecraft.text.Text.literal("ModpackChecker configuration reloaded"), false);
-                    return 1;
-                })
-        );
+                      return 1;
+                    })
+            );
     }
 }

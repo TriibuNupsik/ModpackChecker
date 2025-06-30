@@ -16,8 +16,7 @@ public class ConfigManager {
     
     // Use standard server config folder
     private static final Path CONFIG_DIR = FabricLoader.getInstance().getGameDir().resolve("config");
-    private static final Path SERVER_CONFIG_PATH = CONFIG_DIR.resolve("modpack-checker-server.toml");
-    private static final Path CLIENT_CONFIG_PATH = CONFIG_DIR.resolve("modpack-checker-client.toml");
+    private static final Path CONFIG_PATH = CONFIG_DIR.resolve("modpack-checker.toml");
     
     // Server configuration
     public static boolean enable = true;
@@ -36,12 +35,11 @@ public class ConfigManager {
                 Files.createDirectories(CONFIG_DIR);
             }
             
-            // Copy default config files if they don't exist
-            copyDefaultConfigs();
+            // Copy default config file if it doesn't exist
+            copyDefaultConfig();
             
-            // Load configurations
-            loadServerConfig();
-            loadClientConfig();
+            // Load configuration
+            loadConfig();
             
             LOGGER.info("Configuration loaded successfully");
         } catch (IOException e) {
@@ -51,20 +49,21 @@ public class ConfigManager {
     
     public static void reload() {
         try {
-            loadServerConfig();
-            loadClientConfig();
+            loadConfig();
             LOGGER.info("Configuration reloaded successfully");
         } catch (IOException e) {
             LOGGER.error("Failed to reload configuration", e);
         }
     }
     
-    private static void copyDefaultConfigs() throws IOException {
-        // Copy server config
-        if (!Files.exists(SERVER_CONFIG_PATH)) {
-            String defaultServerConfig = """
-                # Modpack Checker Server Configuration
+    private static void copyDefaultConfig() throws IOException {
+        if (!Files.exists(CONFIG_PATH)) {
+            String defaultConfig = """
+                # Modpack Checker Configuration
+                # This file contains both server and client configuration
                 
+                # Server Configuration
+                [server]
                 # Enable or disable modpack version checking
                 enable = true
                 
@@ -72,7 +71,7 @@ public class ConfigManager {
                 expected_version = "1.2.3"
                 
                 # Kick messages for different scenarios
-                [messages]
+                [server.messages]
                 # Message shown when client doesn't have the mod installed
                 no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
                 
@@ -81,63 +80,51 @@ public class ConfigManager {
                 
                 # Message shown when there's a server configuration error
                 server_error = "❌ Server configuration error. Please contact an administrator."
-                """;
-            Files.writeString(SERVER_CONFIG_PATH, defaultServerConfig);
-            LOGGER.info("Created default server configuration file");
-        }
-        
-        // Copy client config
-        if (!Files.exists(CLIENT_CONFIG_PATH)) {
-            String defaultClientConfig = """
-                # Modpack Checker Client Configuration
                 
+                # Client Configuration
+                [client]
                 # Current modpack version - this should match the server's expected version
                 version = "1.2.3"
                 """;
-            Files.writeString(CLIENT_CONFIG_PATH, defaultClientConfig);
-            LOGGER.info("Created default client configuration file");
+            Files.writeString(CONFIG_PATH, defaultConfig);
+            LOGGER.info("Created default configuration file");
         }
     }
     
-    private static void loadServerConfig() throws IOException {
-        if (!Files.exists(SERVER_CONFIG_PATH)) {
-            LOGGER.warn("Server configuration file not found, using defaults");
+    private static void loadConfig() throws IOException {
+        if (!Files.exists(CONFIG_PATH)) {
+            LOGGER.warn("Configuration file not found, using defaults");
             return;
         }
         
-        try (FileConfig config = FileConfig.of(SERVER_CONFIG_PATH, TomlFormat.instance())) {
+        try (FileConfig config = FileConfig.of(CONFIG_PATH, TomlFormat.instance())) {
             config.load();
             
-            // Load server configuration values
-            enable = config.getOrElse("enable", true);
-            expectedVersion = config.getOrElse("expected_version", "1.2.3");
-            
-            // Load messages
-            Config messages = config.get("messages");
-            if (messages != null) {
-                noModMessage = messages.getOrElse("no_mod", noModMessage);
-                wrongVersionMessage = messages.getOrElse("wrong_version", wrongVersionMessage);
-                serverErrorMessage = messages.getOrElse("server_error", serverErrorMessage);
+            // Load server configuration
+            Config serverConfig = config.get("server");
+            if (serverConfig != null) {
+                enable = serverConfig.getOrElse("enable", true);
+                expectedVersion = serverConfig.getOrElse("expected_version", "1.2.3");
+                
+                // Load server messages
+                Config messages = serverConfig.get("messages");
+                if (messages != null) {
+                    noModMessage = messages.getOrElse("no_mod", noModMessage);
+                    wrongVersionMessage = messages.getOrElse("wrong_version", wrongVersionMessage);
+                    serverErrorMessage = messages.getOrElse("server_error", serverErrorMessage);
+                }
             }
             
-            LOGGER.info("Server configuration loaded - enable: {}, expected version: {}", enable, expectedVersion);
+            // Load client configuration
+            Config clientConfig = config.get("client");
+            if (clientConfig != null) {
+                clientVersion = clientConfig.getOrElse("version", "1.2.3");
+            }
+            
+            LOGGER.info("Configuration loaded - server enable: {}, expected version: {}, client version: {}", 
+                       enable, expectedVersion, clientVersion);
         } catch (Exception e) {
-            LOGGER.error("Failed to load server configuration", e);
-        }
-    }
-    
-    private static void loadClientConfig() throws IOException {
-        if (!Files.exists(CLIENT_CONFIG_PATH)) {
-            LOGGER.warn("Client configuration file not found, using defaults");
-            return;
-        }
-        
-        try (FileConfig config = FileConfig.of(CLIENT_CONFIG_PATH, TomlFormat.instance())) {
-            config.load();
-            clientVersion = config.getOrElse("version", "1.2.3");
-            LOGGER.info("Client configuration loaded - version: {}", clientVersion);
-        } catch (Exception e) {
-            LOGGER.error("Failed to load client configuration", e);
+            LOGGER.error("Failed to load configuration", e);
         }
     }
     
