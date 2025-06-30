@@ -8,7 +8,6 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 - **Easy Configuration**: Simple TOML files for server and client configuration
 - **Automatic Disconnection**: Players with incorrect versions are automatically disconnected with helpful messages
 - **Vanilla Reload Integration**: Configuration reloads automatically when using vanilla's `/reload` command
-- **No Commands**: All configuration is done through config files
 
 ## Installation
 
@@ -102,4 +101,5 @@ The mod automatically detects singleplayer environments and disables version che
 - Minimal network overhead
 - Compatible with Fabric API 0.92.2+ for Minecraft 1.20.1
 - Configuration files are automatically created with sensible defaults
-- Uses night-config:toml for robust TOML configuration parsing
+- Uses night-config:toml (Licensed under LGPL) for robust TOML configuration parsing
+- Environment-aware: Only generates and loads appropriate config files for the current environment

@@ -3,10 +3,16 @@
   "id": "modpack-checker",
   "version": "${version}",
   "name": "Modpack Checker",
-  "description": "",
-  "authors": [],
-  "contact": {},
-  "license": "ARR",
+  "description": "Checks if the modpack is compatible with the server",
+  "authors": [
+    "Triibu Nupsik"
+  ],
+  "contact": {
+    "homepage": "https://triibu.tech/",
+    "issues": "https://github.com/TriibuNupsik/ModpackChecker/issues",
+    "sources": "https://github.com/TriibuNupsik/ModpackChecker"
+  },
+  "license": "Apache-2.0",
   "icon": "assets/modpack-checker/icon.png",
   "environment": "*",
   "entrypoints": {

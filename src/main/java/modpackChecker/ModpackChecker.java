@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025. Triibunupsik
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package modpackChecker;
 
 import net.fabricmc.api.ModInitializer;
@@ -20,7 +25,7 @@ public class ModpackChecker implements ModInitializer {
         LOGGER.info("ModpackChecker starting");
 
         // Initialize configuration
-        ConfigManager.init();
+        ConfigManager.init(false);
         LOGGER.info("ModpackChecker started");
     }
 
