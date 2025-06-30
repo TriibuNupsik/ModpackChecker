@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "modpack-checker",
+  "version": "${version}",
+  "name": "Modpack Checker",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "ARR",
+  "icon": "assets/modpack-checker/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "modpackChecker.client.ModpackCheckerClient"
+    ],
+    "main": [
+      "modpackChecker.ModpackChecker"
+    ]
+  },
+  "mixins": [
+    "modpackChecker.mixins.json",
+    {
+      "config": "modpackChecker.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
