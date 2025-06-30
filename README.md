@@ -5,53 +5,71 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 ## Features
 
 - **Lightweight Version Checking**: Simple version-based verification instead of complex modlist comparison
-- **Easy Setup**: Just set the expected version on the server and include version files in client modpacks
+- **Easy Configuration**: Simple TOML files for server and client configuration
 - **Automatic Disconnection**: Players with incorrect versions are automatically disconnected with helpful messages
-- **Admin Commands**: Server administrators can easily manage version checking
+- **Vanilla Reload Integration**: Configuration reloads automatically when using vanilla's `/reload` command
+- **No Commands**: All configuration is done through config files
 
 ## Installation
 
 ### Server Setup
 
 1. Install the mod on your server
-2. Use the `/modcheck_setversion <version>` command to set the expected version (e.g., `1.2.3`)
-3. The expected version will be saved to `expected_version.txt` in your server directory
+2. The configuration file will be automatically created at `config/modpack-checker-server.toml`
+3. Edit the configuration file to set your desired settings
+4. Use `/reload` to apply configuration changes
 
 ### Client Setup
 
 1. Include this mod in your modpack
-2. Create a file named `modpack_version.txt` in the `.minecraft` folder with the current modpack version
-3. Distribute the modpack to your players
+2. The configuration file will be automatically created at `config/modpack-checker-client.toml`
+3. Edit the configuration file to set the current modpack version
+4. Distribute the modpack to your players
 
-## Commands
+## Configuration
 
-- `/modcheck_off` - Temporarily disable version checking (requires OP level 4)
-- `/modcheck_on` - Re-enable version checking (requires OP level 4)
-- `/modcheck_setversion <version>` - Set the expected version (requires OP level 4)
+### Server Configuration (`config/modpack-checker-server.toml`)
+
+```toml
+# Modpack Checker Server Configuration
+
+# Enable or disable modpack version checking
+enable = true
+
+# Expected modpack version that clients must have
+expected_version = "1.2.3"
+
+# Kick messages for different scenarios
+[messages]
+# Message shown when client doesn't have the mod installed
+no_mod = "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+
+# Message shown when client has wrong version (use {version} as placeholder)
+wrong_version = "❌ Please install modpack version {version}: https://triibu.tech/minecraft"
+
+# Message shown when there's a server configuration error
+server_error = "❌ Server configuration error. Please contact an administrator."
+```
+
+### Client Configuration (`config/modpack-checker-client.toml`)
+
+```toml
+# Modpack Checker Client Configuration
+
+# Current modpack version - this should match the server's expected version
+version = "1.2.3"
+```
 
 ## How It Works
 
 1. When a player connects, the server sends a version check request
-2. If the client has the mod installed, it reads its local `modpack_version.txt` file and sends the version back
-3. The server compares the client's version with the expected version from `expected_version.txt`
+2. If the client has the mod installed, it reads its configuration file and sends the version back
+3. The server compares the client's version with the expected version from its configuration
 4. If versions don't match, the player is disconnected with a helpful message
 
-## File Locations
+## Configuration Reload
 
-- **Server**: `expected_version.txt` (created automatically when setting version)
-- **Client**: `modpack_version.txt` (must be created manually in modpack)
-
-## Example Files
-
-### Client Version File (`modpack_version.txt`)
-```
-1.2.3
-```
-
-### Server Expected Version File (`expected_version.txt`)
-```
-1.2.3
-```
+The mod automatically reloads its configuration when you use the vanilla `/reload` command. This allows you to change settings without restarting the server.
 
 ## Error Messages
 
@@ -59,9 +77,19 @@ A lightweight Fabric mod for Minecraft servers to verify that clients are using 
 - **Wrong Version**: "❌ Please install modpack version X.X.X: https://triibu.tech/minecraft"
 - **Server Error**: "❌ Server configuration error. Please contact an administrator."
 
-## Configuration
+## Configuration Options
 
-The mod automatically creates an `expected_version.txt` file in your server directory when you first set a version. You can also manually create this file with the desired version.
+### Server Options
+
+- `enable` - Enable or disable version checking (true/false)
+- `expected_version` - The version that clients must have
+- `messages.no_mod` - Message shown when client doesn't have the mod
+- `messages.wrong_version` - Message shown when client has wrong version (use {version} placeholder)
+- `messages.server_error` - Message shown for server configuration errors
+
+### Client Options
+
+- `version` - The current modpack version
 
 ## Singleplayer
 
@@ -73,3 +101,5 @@ The mod automatically detects singleplayer environments and disables version che
 - No complex modlist comparison or checksum calculations
 - Minimal network overhead
 - Compatible with Fabric API 0.92.2+ for Minecraft 1.20.1
+- Configuration files are automatically created with sensible defaults
+- Uses night-config:toml for robust TOML configuration parsing

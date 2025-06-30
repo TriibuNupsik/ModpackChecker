@@ -5,9 +5,6 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import java.io.IOException;
-import java.nio.file.Files;
-
 import static modpackChecker.ModpackChecker.*;
 
 public class NetworkHandler {
@@ -21,7 +18,7 @@ public class NetworkHandler {
     private static void registerVersionHandler() {
         // Send version request to client during login
         ServerLoginConnectionEvents.QUERY_START.register((handler, server, sender, synchronizer) -> {
-            if (isModCheckEnabled) {
+            if (ConfigManager.enable) {
                 String conInfo = handler.getConnectionInfo();
                 String name = conInfo.substring(conInfo.indexOf("name=")+5, conInfo.indexOf(",", conInfo.indexOf("name=")+5));
                 String uuid = conInfo.substring(conInfo.indexOf("id=")+3, conInfo.indexOf(","));
@@ -37,22 +34,15 @@ public class NetworkHandler {
         ServerLoginNetworking.registerGlobalReceiver(VERSION_CHECK_CHANNEL, (server, handler, understood, buf, synchronizer, responseSender) -> {
             if (!understood) {
                 // Client doesn't have the mod installed
-                handler.disconnect(Text.of("❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"));
+                handler.disconnect(Text.of(ConfigManager.noModMessage));
             } else {
-                if (isModCheckEnabled) {
+                if (ConfigManager.enable) {
                     try {
                         String clientVersion = buf.readString(64);
                         
-                        // Check if expected version file exists
-                        if (!Files.exists(VERSION_FILE_PATH)) {
-                            LOGGER.warn("Expected version file not found. Creating default version file.");
-                            Files.writeString(VERSION_FILE_PATH, "1.0.0");
-                        }
-                        
-                        String expectedVersion = Files.readString(VERSION_FILE_PATH).trim();
-                        
-                        if (!clientVersion.equals(expectedVersion)) {
-                            handler.disconnect(Text.of("❌ Please install modpack version " + expectedVersion + ": https://triibu.tech/minecraft"));
+                        if (!clientVersion.equals(ConfigManager.expectedVersion)) {
+                            String message = ConfigManager.formatMessage(ConfigManager.wrongVersionMessage, ConfigManager.expectedVersion);
+                            handler.disconnect(Text.of(message));
                         } else {
                             String conInfo = handler.getConnectionInfo();
                             String name = conInfo.substring(conInfo.indexOf("name=")+5, conInfo.indexOf(",", conInfo.indexOf("name=")+5));
@@ -60,9 +50,9 @@ public class NetworkHandler {
                             
                             LOGGER.info("Version verified for {}: {} (version: {})", name, uuid, clientVersion);
                         }
-                    } catch (IOException e) {
-                        LOGGER.error("Failed to read expected version file", e);
-                        handler.disconnect(Text.of("❌ Server configuration error. Please contact an administrator."));
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to process version check", e);
+                        handler.disconnect(Text.of(ConfigManager.serverErrorMessage));
                     }
                 }
             }

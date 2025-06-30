@@ -1,0 +1,4 @@
+# Modpack Checker Client Configuration
+
+# Current modpack version - this should match the server's expected version
+version = "1.2.3" 
