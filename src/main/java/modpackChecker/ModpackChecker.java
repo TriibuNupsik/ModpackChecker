@@ -21,7 +21,11 @@ public class ModpackChecker implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
-        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
+                (server, resourceManager, success) -> {
+                    ConfigManager.reload(); // I always reload the config for the mod because datapacks don't affect it
+                }
+        );
         LOGGER.info("ModpackChecker starting");
 
         // Initialize configuration
@@ -39,19 +43,5 @@ public class ModpackChecker implements ModInitializer {
             NetworkHandler.register();
             LOGGER.info("ModpackChecker network handlers registered");
         }
-    }
-
-    private void onServerStarted(MinecraftServer mcserver) {
-        // Register reload listener
-        server.getCommandManager().getDispatcher().register(
-            net.minecraft.server.command.CommandManager.literal("reload")
-                .executes(context -> {
-                    // Reload our configuration when vanilla reload is called
-                    ConfigManager.reload();
-                    context.getSource().sendFeedback(() -> 
-                        net.minecraft.text.Text.literal("ModpackChecker configuration reloaded"), false);
-                    return 1;
-                })
-        );
     }
 }
