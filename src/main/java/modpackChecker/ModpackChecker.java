@@ -1,8 +1,19 @@
+/*
+ * Copyright (c) 2026. Triibunupsik
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 package modpackChecker;
 
+import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,52 +21,46 @@ public class ModpackChecker implements ModInitializer {
     public static final String MOD_ID = "ModpackChecker";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static MinecraftServer server;
     public static boolean isSingleplayer;
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
-        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
-        LOGGER.info("ModpackChecker starting");
-
-        // Initialize configuration
         ConfigManager.init();
-        LOGGER.info("ModpackChecker started");
+        ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
+        CommandRegistrationCallback.EVENT.register(this::registerCommands);
+
+        LOGGER.info("Started successfully!");
     }
 
-    private void onServerStarting(MinecraftServer mcserver) {
-        server = mcserver;
+    private void onServerStarting(MinecraftServer server) {
         isSingleplayer = server.isSingleplayer();
-        
-        // Check if this is a LAN server (singleplayer but with network enabled)
-        boolean isLanServer = isSingleplayer && server.isRemote();
-        
-        if (isSingleplayer && !isLanServer) {
-            // True singleplayer - don't register events
+        // Lan check in IntegradeServerMixin.java
+        if (isSingleplayer) {
+            // Singleplayer - don't register events
             LOGGER.info("Detected SinglePlayer environment, ModpackChecker disabled");
-        } else if (isLanServer) {
-            // LAN multiplayer - enable modpack checking
-            NetworkHandler.register();
-            LOGGER.info("Detected LAN multiplayer environment, ModpackChecker enabled");
         } else {
-            // Dedicated server - enable modpack checking
             NetworkHandler.register();
             LOGGER.info("Detected dedicated server environment, ModpackChecker enabled");
         }
     }
 
-    private void onServerStarted(MinecraftServer mcserver) {
-        // Register reload listener
-        server.getCommandManager().getDispatcher().register(
-            net.minecraft.server.command.CommandManager.literal("reload")
-                    .executes(context -> {
-                    // Reload our configuration when vanilla reload is called
-                    ConfigManager.reload();
-                    context.getSource().sendFeedback(() -> 
-                        net.minecraft.text.Text.literal("ModpackChecker configuration reloaded"), false);
-                      return 1;
-                    })
-            );
+    private void registerCommands(
+            CommandDispatcher<ServerCommandSource> dispatcher,
+            CommandRegistryAccess registryAccess,
+            CommandManager.RegistrationEnvironment environment
+    ) {
+        dispatcher.register(CommandManager.literal("modpackchecker-reload")
+            .requires(source -> source.hasPermissionLevel(2))
+            .executes(context -> {
+                ConfigManager.loadConfig();
+
+                context.getSource().sendFeedback(
+                        () -> Text.literal("Modpack Checker configuration reloaded."),
+                        true
+                );
+
+                return 1;
+            })
+        );
     }
 }

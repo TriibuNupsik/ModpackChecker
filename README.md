@@ -80,9 +80,9 @@ The mod automatically reloads its configuration when you use the vanilla `/reloa
 
 ## Error Messages
 
-- **No Mod**: "❌ Please install the ModpackChecker mod: https://triibu.tech/minecraft"
-- **Wrong Version**: "❌ Please install modpack version X.X.X: https://triibu.tech/minecraft"
-- **Server Error**: "❌ Server configuration error. Please contact an administrator."
+- **No Mod**: "Please install the ModpackChecker mod: https://triibu.tech/minecraft"
+- **Wrong Version**: "Please install modpack version X.X.X: https://triibu.tech/minecraft"
+- **Server Error**: "Server configuration error. Please contact an administrator."
 
 ## Configuration Options
 

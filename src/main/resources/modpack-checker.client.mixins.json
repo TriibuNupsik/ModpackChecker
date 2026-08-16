@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "modpackChecker.client.mixin",
+  "refmap": "client-ModpackChecker-refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "IntegratedServerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

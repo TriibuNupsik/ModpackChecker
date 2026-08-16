@@ -23,6 +23,12 @@
       "modpackChecker.ModpackChecker"
     ]
   },
+  "mixins": [
+    {
+      "environment": "client",
+      "config": "modpack-checker.client.mixins.json"
+    }
+  ],
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
