@@ -21,8 +21,6 @@ public class ModpackChecker implements ModInitializer {
     public static final String MOD_ID = "ModpackChecker";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static boolean isSingleplayer;
-
     @Override
     public void onInitialize() {
         ConfigManager.init();
@@ -33,15 +31,7 @@ public class ModpackChecker implements ModInitializer {
     }
 
     private void onServerStarting(MinecraftServer server) {
-        isSingleplayer = server.isSingleplayer();
-        // Lan check in IntegradeServerMixin.java
-        if (isSingleplayer) {
-            // Singleplayer - don't register events
-            LOGGER.info("Detected SinglePlayer environment, ModpackChecker disabled");
-        } else {
-            NetworkHandler.register();
-            LOGGER.info("Detected dedicated server environment, ModpackChecker enabled");
-        }
+        NetworkHandler.register();
     }
 
     private void registerCommands(
@@ -52,14 +42,17 @@ public class ModpackChecker implements ModInitializer {
         dispatcher.register(CommandManager.literal("modpackchecker-reload")
             .requires(source -> source.hasPermissionLevel(2))
             .executes(context -> {
-                ConfigManager.loadConfig();
+                int result = ConfigManager.loadConfig();
 
-                context.getSource().sendFeedback(
-                        () -> Text.literal("Modpack Checker configuration reloaded."),
-                        true
-                );
+                if(result == 1) {
+                    context.getSource().sendFeedback(
+                            () -> Text.literal("Modpack Checker configuration reloaded."), true);
+                } else {
+                    context.getSource().sendError(
+                            Text.literal("Modpack Checker configuration was not reloaded: \n Check the server log for details."));
+                }
 
-                return 1;
+                return result;
             })
         );
     }

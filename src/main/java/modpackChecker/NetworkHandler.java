@@ -55,13 +55,14 @@ public class NetworkHandler {
             if (!understood) {
                 // Client doesn't have the mod installed
                 LOGGER.info("[Debug] Client {} doesn't have the mod installed, disconnecting", name);
-                handler.disconnect(Text.of(ConfigManager.noModMessage));
+                String message = ConfigManager.formatMessage(ConfigManager.noModMessage, ConfigManager.version);
+                handler.disconnect(Text.of(message));
             } else {
                 try {
                     String clientVersion = buf.readString(64);
-                    if (!ConfigManager.areVersionsCompatible(clientVersion, ConfigManager.expectedVersion)) {
-                        String message = ConfigManager.formatMessage(ConfigManager.wrongVersionMessage, ConfigManager.expectedVersion);
-                        LOGGER.info("[Debug] Client {} has incompatible version: {} (expected: {}), disconnecting", name, clientVersion, ConfigManager.expectedVersion);
+                    if (!ConfigManager.areVersionsCompatible(clientVersion, ConfigManager.version)) {
+                        String message = ConfigManager.formatMessage(ConfigManager.wrongVersionMessage, ConfigManager.version);
+                        LOGGER.info("[Debug] Client {} has incompatible version: {} (expected: {}), disconnecting", name, clientVersion, ConfigManager.version);
                         handler.disconnect(Text.of(message));
                     } else {
                         LOGGER.info("[Debug] Version verified for {}: {} (version: {})", name, uuid, clientVersion);

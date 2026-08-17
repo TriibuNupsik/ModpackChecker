@@ -26,13 +26,13 @@ public class ModpackCheckerClient implements ClientModInitializer {
             LOGGER.info("[Debug] Received version check request from server");
 
             PacketByteBuf responseBuf = PacketByteBufs.create();
-            responseBuf.writeString(ConfigManager.clientVersion, 64);
+            responseBuf.writeString(ConfigManager.version, 64);
 
-            LOGGER.info("[Debug] Sending version response: {}", ConfigManager.clientVersion);
+            LOGGER.info("[Debug] Sending version response: {}", ConfigManager.version);
             return CompletableFuture.completedFuture(responseBuf);
         }));
 
         LOGGER.info("Client loaded");
-        LOGGER.info("[Debug] Client version: {}", ConfigManager.clientVersion);
+        LOGGER.info("[Debug] Client version: {}", ConfigManager.version);
     }
 }
