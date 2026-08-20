@@ -109,7 +109,7 @@ public class ConfigManager {
                     serverErrorMessage = messages.getOrElse("server_error", DEFAULT_SERVER_ERROR_MESSAGE);
                 }
             }
-            LOGGER.info("[Debug] Configuration loaded - server enable: {}, version: {}", enable, version);
+            LOGGER.debug("Configuration loaded: checking enabled={}, version={}", enable, version);
             return 1;
         } catch (Exception e) {
             LOGGER.error("Failed to load, configuration invalid", e);

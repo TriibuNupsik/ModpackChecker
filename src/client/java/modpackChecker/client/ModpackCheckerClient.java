@@ -23,16 +23,16 @@ public class ModpackCheckerClient implements ClientModInitializer {
     public void onInitializeClient() {
         // Register client-side network handler to respond to version checks
         ClientLoginNetworking.registerGlobalReceiver(VERSION_CHECK_CHANNEL, ((client, handler, buf, listenerAdder) -> {
-            LOGGER.info("[Debug] Received version check request from server");
+            LOGGER.debug("Received version check request from server");
 
             PacketByteBuf responseBuf = PacketByteBufs.create();
             responseBuf.writeString(ConfigManager.version, 64);
 
-            LOGGER.info("[Debug] Sending version response: {}", ConfigManager.version);
+            LOGGER.debug("Sending modpack version response: {}", ConfigManager.version);
             return CompletableFuture.completedFuture(responseBuf);
         }));
 
         LOGGER.info("Client loaded");
-        LOGGER.info("[Debug] Client version: {}", ConfigManager.version);
+        LOGGER.debug("Client modpack version: {}", ConfigManager.version);
     }
 }
