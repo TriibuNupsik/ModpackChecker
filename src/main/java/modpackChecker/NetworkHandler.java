@@ -1,121 +1,83 @@
 /*
- * Copyright (c) 2025. Triibunupsik
+ * Copyright (c) 2026. Triibunupsik
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package modpackChecker;
 
-import net.fabricmc.fabric.api.networking.v1.*;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import static modpackChecker.ModpackChecker.*;
+import static modpackChecker.ModpackChecker.LOGGER;
 
 public class NetworkHandler {
     public static final Identifier VERSION_CHECK_CHANNEL = new Identifier("modpack-checker", "version_check");
+    private static boolean registered = false;
 
     public static void register() {
-        LOGGER.info("Registering network handlers");
+        if (registered) return;
+        registered = true;
+        LOGGER.debug("Registering network handlers");
         registerVersionHandler();
     }
 
-    /**
-     * Safely parse connection info to extract player name and UUID
-     */
-    private static String[] parseConnectionInfo(String conInfo) {
-        try {
-            String name = "Unknown";
-            String uuid = "Unknown";
-            
-            // Try to extract name
-            int nameIndex = conInfo.indexOf("name=");
-            if (nameIndex != -1) {
-                int nameStart = nameIndex + 5;
-                int nameEnd = conInfo.indexOf(",", nameStart);
-                if (nameEnd == -1) {
-                    nameEnd = conInfo.length();
-                }
-                if (nameStart < nameEnd && nameEnd <= conInfo.length()) {
-                    name = conInfo.substring(nameStart, nameEnd);
-                }
-            }
-            
-            // Try to extract UUID
-            int uuidIndex = conInfo.indexOf("id=");
-            if (uuidIndex != -1) {
-                int uuidStart = uuidIndex + 3;
-                int uuidEnd = conInfo.indexOf(",", uuidStart);
-                if (uuidEnd == -1) {
-                    uuidEnd = conInfo.length();
-                }
-                if (uuidStart < uuidEnd && uuidEnd <= conInfo.length()) {
-                    uuid = conInfo.substring(uuidStart, uuidEnd);
-                }
-            }
-            
-            return new String[]{name, uuid};
-        } catch (Exception e) {
-            LOGGER.warn("Failed to parse connection info: {}", conInfo, e);
-            return new String[]{"Unknown", "Unknown"};
-        }
-    }
-
     private static void registerVersionHandler() {
-        // Send version request to client during login - only if enabled
+        // Send version request to client during login
         ServerLoginConnectionEvents.QUERY_START.register((handler, server, sender, synchronizer) -> {
-            if (ConfigManager.enable) {
-                String conInfo = handler.getConnectionInfo();
-                String[] playerInfo = parseConnectionInfo(conInfo);
-                String name = playerInfo[0];
-                String uuid = playerInfo[1];
-
-                PacketByteBuf buf = PacketByteBufs.create();
-                sender.sendPacket(VERSION_CHECK_CHANNEL, buf);
-
-                LOGGER.debug("Sending version request to {}: {}", name, uuid);
-            } else {
-                LOGGER.debug("Modpack checking is disabled, skipping version check");
-            }
-        });
-
-        // Handle version response from client - only if enabled
-        ServerLoginNetworking.registerGlobalReceiver(VERSION_CHECK_CHANNEL, (server, handler, understood, buf, synchronizer, responseSender) -> {
-            if (!ConfigManager.enable) {
-                LOGGER.debug("Modpack checking is disabled, allowing connection");
+            if (!(ConfigManager.enableServer && !server.isSingleplayer())
+                    && !(ConfigManager.enableLan && server.isSingleplayer())) {
+                LOGGER.debug("checking disabled - skipping version check");
                 return;
             }
-            
+            String conInfo = handler.getConnectionInfo();
+            String name = conInfo.substring(conInfo.indexOf("name=")+5, conInfo.indexOf(",", conInfo.indexOf("name=")+5));
+            String uuid = conInfo.substring(conInfo.indexOf("id=")+3, conInfo.indexOf(",", conInfo.indexOf("id=")+3));
+
+            PacketByteBuf buf = PacketByteBufs.create();
+            sender.sendPacket(VERSION_CHECK_CHANNEL, buf);
+
+            LOGGER.debug("Requesting modpack version from {} ({})", name, uuid);
+        });
+
+        // Handle version response from client
+        ServerLoginNetworking.registerGlobalReceiver(VERSION_CHECK_CHANNEL, (server, handler, understood, buf, synchronizer, responseSender) -> {
+            if (!(ConfigManager.enableServer && !server.isSingleplayer())
+                    && !(ConfigManager.enableLan && server.isSingleplayer())) {
+                LOGGER.debug("checking disabled - allowing connection");
+                return;
+            }
+
+            String conInfo = handler.getConnectionInfo();
+            String name = conInfo.substring(conInfo.indexOf("name=")+5, conInfo.indexOf(",", conInfo.indexOf("name=")+5));
+            String uuid = conInfo.substring(conInfo.indexOf("id=")+3, conInfo.indexOf(",", conInfo.indexOf("id=")+3));
+
             if (!understood) {
                 // Client doesn't have the mod installed
-                String conInfo = handler.getConnectionInfo();
-                String[] playerInfo = parseConnectionInfo(conInfo);
-                String name = playerInfo[0];
-                LOGGER.debug("Client {} doesn't have the mod installed, disconnecting", name);
-                handler.disconnect(Text.of(ConfigManager.noModMessage));
-            } else {
-                try {
-                    String clientVersion = buf.readString(64);
-                    String conInfo = handler.getConnectionInfo();
-                    String[] playerInfo = parseConnectionInfo(conInfo);
-                    String name = playerInfo[0];
-                    String uuid = playerInfo[1];
-                    
-                    if (!ConfigManager.areVersionsCompatible(clientVersion, ConfigManager.expectedVersion)) {
-                        String message = ConfigManager.formatMessage(ConfigManager.wrongVersionMessage, ConfigManager.expectedVersion);
-                        LOGGER.debug("Client {} has incompatible version: {} (expected: {}), disconnecting", name, clientVersion, ConfigManager.expectedVersion);
-                        handler.disconnect(Text.of(message));
-                    } else {
-                        LOGGER.debug("Version verified for {}: {} (version: {})", name, uuid, clientVersion);
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Failed to process version check", e);
-                    String conInfo = handler.getConnectionInfo();
-                    String[] playerInfo = parseConnectionInfo(conInfo);
-                    String name = playerInfo[0];
-                    LOGGER.debug("Version check failed for {}, disconnecting", name);
-                    handler.disconnect(Text.of(ConfigManager.serverErrorMessage));
+                String message = ConfigManager.formatMessage(ConfigManager.noModMessage, ConfigManager.version);
+                handler.disconnect(Text.of(message));
+                LOGGER.info("Rejected {}: Modpack Checker is not installed", name);
+                return;
+            }
+
+            try {
+                String clientVersion = buf.readString(64);
+
+                if (!ConfigManager.areVersionsCompatible(clientVersion, ConfigManager.version)) {
+                    // Client has wrong version
+                    String message = ConfigManager.formatMessage(ConfigManager.wrongVersionMessage, ConfigManager.version);
+                    handler.disconnect(Text.of(message));
+                    LOGGER.info("Rejected {}: modpack version {} is incompatible (server version: {})", name, clientVersion, ConfigManager.version);
+                    return;
                 }
+
+                LOGGER.debug("Verified modpack version {} for {} ({})", clientVersion, name, uuid);
+            } catch (Exception e) {
+                LOGGER.error("Failed to process version check for {} ({}) ", name, uuid, e);
+                handler.disconnect(Text.of(ConfigManager.serverErrorMessage));
             }
         });
     }

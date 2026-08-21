@@ -3,9 +3,9 @@
   "id": "modpack-checker",
   "version": "${version}",
   "name": "Modpack Checker",
-  "description": "Checks if the modpack is compatible with the server",
+  "description": "Checks if the client and server modpack versions match",
   "authors": [
-    "Triibu Nupsik"
+    "TriibuNupsik"
   ],
   "contact": {
     "homepage": "https://triibu.tech/",
@@ -26,6 +26,6 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": "${mod_mc_version}"
+    "minecraft": "${minecraft_version}"
   }
 }

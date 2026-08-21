@@ -1,0 +1,21 @@
+# Modpack Checker Configuration
+# This file contains both server and client configuration
+
+# Modpack version of the server and client, that must match
+# version "development" always allows joining
+version = "1.2.3"
+
+# Enable or disable modpack version checking
+enable_server = true
+enable_lan = true
+
+# Kick messages for different scenarios
+[messages]
+# Message shown when client doesn't have the mod installed
+no_mod = "Modpack not installed! \n\n Please install Create Empire version \"{version}\" from: \n https://triibu.tech/minecraft"
+
+# Message shown when client has wrong version (use {version} as placeholder)
+wrong_version = "Wrong modpack version installed! \n\n Please install Create Empire version \"{version}\" from: \n https://triibu.tech/minecraft"
+
+# Message shown when there's a server configuration error
+server_error = "Server configuration error. Please contact triibu@triibu.tech or triibunupsik on discord."
