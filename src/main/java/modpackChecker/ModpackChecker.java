@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,17 +43,30 @@ public class ModpackChecker implements ModInitializer {
         dispatcher.register(CommandManager.literal("modpackchecker-reload")
             .requires(source -> source.hasPermissionLevel(2))
             .executes(context -> {
-                int result = ConfigManager.loadConfig();
+                ConfigManager.returnReason result = ConfigManager.loadConfig();
 
-                if(result == 1) {
-                    context.getSource().sendFeedback(
-                            () -> Text.literal("Modpack Checker configuration reloaded."), true);
-                } else {
-                    context.getSource().sendError(
-                            Text.literal("Modpack Checker configuration was not reloaded: \n Check the server log for details."));
+                switch (result) {
+                    case SUCCESS:
+                        context.getSource().sendFeedback(
+                                () -> Text.literal("Modpack Checker configuration reloaded."), true);
+                    break;
+                    case UNKNOWN:
+                        context.getSource().sendError(
+                                Text.literal("Modpack Checker configuration not reloaded: \n Check the server log for details."));
+                    break;
+                    case BROKEN_CONFIG:
+                        context.getSource().sendError(
+                                Text.literal("Modpack Checker configuration not reloaded: \n Config file is broken. Check the server log for details."));
+                    break;
+                    case MISSING_CONFIG:
+                        context.getSource().sendFeedback(
+                                () -> Text.literal("Modpack Checker configuration regenerated:").formatted(Formatting.YELLOW)
+                                        .append("\n ")
+                                        .append(Text.literal("Config file was missing. Check the server log for details.").formatted(Formatting.RED)),
+                                true);
+                    break;
                 }
-
-                return result;
+                return 0;
             })
         );
     }

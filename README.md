@@ -41,10 +41,9 @@ Default generated configuration:
 # version "development" always allows joining
 version = "1.0.0"
 
-# Server Configuration
-[server]
 # Enable or disable modpack version checking
-enable = true
+enable_server = true
+enable_lan = true
 
 # Kick messages for different scenarios
 [messages]
@@ -68,8 +67,9 @@ server_error = "Server configuration error. Please contact an administrator."
 
 ### Configuration Options
 
-- `version` - The version that server checks and clients send
-- `server.enable` - Enable or disable version checking (true/false)
+- `version` - The version that server checks and clients send (string)
+- `enable_server` - Enable or disable version checking for server(true/false)
+- `enable_lan` - Enable or disable version checking for LAN multiplayer (true/false)
 - `messages.no_mod` - Message shown when client doesn't have the mod (to display the version from config use {version} placeholder)
 - `messages.wrong_version` - Message shown when client has wrong version ({version} placeholder can be used here as well)
 - `messages.server_error` - Message shown for server configuration errors

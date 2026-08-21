@@ -19,14 +19,14 @@ public class NetworkHandler {
     public static void register() {
         if (registered) return;
         registered = true;
-
         LOGGER.debug("Registering network handlers");
         registerVersionHandler();
     }
 
     private static void registerVersionHandler() {
         ServerLoginConnectionEvents.QUERY_START.register((handler, server, sender, synchronizer) -> {
-            if (!ConfigManager.enable) {
+            if (!(ConfigManager.enableServer && !server.isSingleplayer())
+                    && !(ConfigManager.enableLan && server.isSingleplayer())) {
                 LOGGER.debug("checking disabled - skipping version check");
                 return;
             }
@@ -41,7 +41,8 @@ public class NetworkHandler {
         });
 
         ServerLoginNetworking.registerGlobalReceiver(VERSION_CHECK_CHANNEL, (server, handler, understood, buf, synchronizer, responseSender) -> {
-            if (!ConfigManager.enable) {
+            if (!(ConfigManager.enableServer && !server.isSingleplayer())
+                    && !(ConfigManager.enableLan && server.isSingleplayer())) {
                 LOGGER.debug("checking disabled - allowing connection");
                 return;
             }

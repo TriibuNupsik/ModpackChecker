@@ -19,6 +19,13 @@ import java.util.TreeSet;
 import static modpackChecker.ModpackChecker.LOGGER;
 
 public class ConfigManager {
+    public enum returnReason {
+        UNKNOWN,
+        SUCCESS,
+        MISSING_CONFIG,
+        BROKEN_CONFIG
+    }
+
     // Config folder constants
     private static final Path CONFIG_DIR = FabricLoader.getInstance().getGameDir().resolve("config");
     private static final Path CONFIG_PATH = CONFIG_DIR.resolve("modpack-checker.toml");
@@ -26,13 +33,15 @@ public class ConfigManager {
     // Default configuration values
     private static final String DEFAULT_VERSION = "1.0.0";
     private static final String DEV_VERSION = "development";
-    private static final boolean DEFAULT_ENABLE = true;
+    private static final boolean DEFAULT_ENABLE_SERVER = true;
+    private static final boolean DEFAULT_ENABLE_LAN = true;
     private static final String DEFAULT_NO_MOD_MESSAGE = "Modpack not installed! \\n\\n Please install modpack version \\\"{version}\\\" \\n <your-modpack-link>";
     private static final String DEFAULT_WRONG_VERSION_MESSAGE = "Wrong modpack version installed! \\n\\n Please install modpack version \\\"{version}\\\" \\n <your-modpack-link>";
     private static final String DEFAULT_SERVER_ERROR_MESSAGE = "Server configuration error. Please contact an administrator.";
 
     // Server configuration
-    public static boolean enable = DEFAULT_ENABLE;
+    public static boolean enableServer = DEFAULT_ENABLE_SERVER;
+    public static boolean enableLan = DEFAULT_ENABLE_LAN;
     public static String version = DEFAULT_VERSION;
     public static String noModMessage = DEFAULT_NO_MOD_MESSAGE;
     public static String wrongVersionMessage = DEFAULT_WRONG_VERSION_MESSAGE;
@@ -62,10 +71,9 @@ public class ConfigManager {
             # version "development" always allows joining
             version = "%s"
             
-            # Server Configuration
-            [server]
             # Enable or disable modpack version checking
-            enable = %s
+            enable_server = %s
+            enable_lan = %s
             
             # Kick messages for different scenarios
             [messages]
@@ -79,7 +87,8 @@ public class ConfigManager {
             server_error = "%s"
             """.formatted(
                 DEFAULT_VERSION,
-                DEFAULT_ENABLE,
+                DEFAULT_ENABLE_SERVER,
+                DEFAULT_ENABLE_LAN,
                 DEFAULT_NO_MOD_MESSAGE,
                 DEFAULT_WRONG_VERSION_MESSAGE,
                 DEFAULT_SERVER_ERROR_MESSAGE
@@ -88,58 +97,64 @@ public class ConfigManager {
         LOGGER.info("Created default configuration file");
     }
 
-    public static int loadConfig() {
+    public static returnReason loadConfig() {
         if (!Files.exists(CONFIG_PATH)) {
-            LOGGER.warn("Configuration file not found: {}", CONFIG_PATH);
-            return 0;
+            LOGGER.error("Configuration file not found: {}", CONFIG_PATH);
+            init();
+            return returnReason.MISSING_CONFIG;
         }
-        
         try (FileConfig config = FileConfig.of(CONFIG_PATH, TomlFormat.instance())) {
             config.load();
 
-            requireOnlyKeys(config, "root", "version", "server", "messages");
-            String loadedVersion = requireValue(config, "version");
+            if (isConfigBroken(config, "root", "version", "enable_server", "enable_lan", "messages")) {
+                return returnReason.BROKEN_CONFIG;
+            }
+            String loadedVersion = config.get("version");
+            boolean loadedEnableServer = config.get("enable_server");
+            boolean loadedEnableLan = config.get("enable_lan");
 
-            Config serverConfig = requireValue(config, "server");
-            requireOnlyKeys(serverConfig, "[server]", "enable");
-            boolean loadedEnable = requireValue(serverConfig, "enable");
-
-            Config messages = requireValue(config, "messages");
-            requireOnlyKeys(messages, "[messages]", "no_mod", "wrong_version", "server_error");
-            String loadedNoModMessage = requireValue(messages, "no_mod");
-            String loadedWrongVersionMessage = requireValue(messages, "wrong_version");
-            String loadedServerErrorMessage = requireValue(messages, "server_error");
+            Config messages = config.get("messages");
+            if (isConfigBroken(messages, "[messages]", "no_mod", "wrong_version", "server_error")) {
+                return returnReason.BROKEN_CONFIG;
+            }
+            String loadedNoModMessage = messages.get("no_mod");
+            String loadedWrongVersionMessage = messages.get("wrong_version");
+            String loadedServerErrorMessage = messages.get("server_error");
 
             version = loadedVersion;
-            enable = loadedEnable;
+            enableServer = loadedEnableServer;
+            enableLan = loadedEnableLan;
             noModMessage = loadedNoModMessage;
             wrongVersionMessage = loadedWrongVersionMessage;
             serverErrorMessage = loadedServerErrorMessage;
 
-            LOGGER.debug("Configuration loaded: checking enabled={}, version={}", enable, version);
-            return 1;
+            LOGGER.debug("Configuration loaded: checking enabled={}, version={}", enableServer, version);
+            return returnReason.SUCCESS;
         } catch (Exception e) {
-            LOGGER.error("Failed to load configuration", e);
-            return 0;
+            String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            LOGGER.error("Failed to read configuration: {} Keeping the previous configuration.", reason);
+            LOGGER.error("Configuration reload failure", e);
+            return returnReason.UNKNOWN;
         }
     }
 
-    private static <T> T requireValue(Config config, String path) {
-        T value = config.get(path);
-        if (value == null) {
-            throw new IllegalArgumentException("Missing required configuration value: " + path);
-        }
-        return value;
-    }
-
-    private static void requireOnlyKeys(Config config, String section, String... allowedKeys) {
+    private static boolean isConfigBroken(Config config, String section, String... keys) {
         Set<String> unknownKeys = new TreeSet<>(config.valueMap().keySet());
-        unknownKeys.removeAll(Set.of(allowedKeys));
+        unknownKeys.removeAll(Set.of(keys));
         if (!unknownKeys.isEmpty()) {
-            throw new IllegalArgumentException(
-                "Unknown configuration key(s) in " + section + ": " + String.join(", ", unknownKeys)
+            LOGGER.error(
+                    "Unknown configuration key(s) in {}: {}. Keeping the previous configuration.",
+                    section,
+                    String.join(", ", unknownKeys)
             );
         }
+        for (String key : keys) {
+            if (config.get(key) == null) {
+                LOGGER.error("Missing required configuration value {} in {}. Keeping the previous configuration.", key, section);
+                return true;
+            }
+        }
+        return false;
     }
     
     public static String formatMessage(String message, String version) {
