@@ -47,7 +47,7 @@ version = "1.0.0"
 enable = true
 
 # Kick messages for different scenarios
-[server.messages]
+[messages]
 # Message shown when client doesn't have the mod installed
 no_mod = "Modpack not installed! \n\n Please install modpack version \"{version}\" \n <your-modpack-link>"
 
@@ -70,9 +70,9 @@ server_error = "Server configuration error. Please contact an administrator."
 
 - `version` - The version that server checks and clients send
 - `server.enable` - Enable or disable version checking (true/false)
-- `server.messages.no_mod` - Message shown when client doesn't have the mod (to display the version from config use {version} placeholder)
-- `server.messages.wrong_version` - Message shown when client has wrong version ({version} placeholder can be used here as well)
-- `server.messages.server_error` - Message shown for server configuration errors
+- `messages.no_mod` - Message shown when client doesn't have the mod (to display the version from config use {version} placeholder)
+- `messages.wrong_version` - Message shown when client has wrong version ({version} placeholder can be used here as well)
+- `messages.server_error` - Message shown for server configuration errors
 
 ## Technical details
 

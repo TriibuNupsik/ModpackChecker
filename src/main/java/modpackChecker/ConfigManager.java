@@ -13,6 +13,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static modpackChecker.ModpackChecker.LOGGER;
 
@@ -66,7 +68,7 @@ public class ConfigManager {
             enable = %s
             
             # Kick messages for different scenarios
-            [server.messages]
+            [messages]
             # Message shown when client doesn't have the mod installed
             no_mod = "%s"
             
@@ -95,25 +97,48 @@ public class ConfigManager {
         try (FileConfig config = FileConfig.of(CONFIG_PATH, TomlFormat.instance())) {
             config.load();
 
-            version = config.getOrElse("version", DEFAULT_VERSION);
+            requireOnlyKeys(config, "root", "version", "server", "messages");
+            String loadedVersion = requireValue(config, "version");
 
-            // Load server configuration
-            Config serverConfig = config.get("server");
-            if (serverConfig != null) {
-                enable =  serverConfig.getOrElse("enable", DEFAULT_ENABLE);
-                // Load server messages
-                Config messages = serverConfig.get("messages");
-                if (messages != null) {
-                    noModMessage = messages.getOrElse("no_mod", DEFAULT_NO_MOD_MESSAGE);
-                    wrongVersionMessage = messages.getOrElse("wrong_version", DEFAULT_WRONG_VERSION_MESSAGE);
-                    serverErrorMessage = messages.getOrElse("server_error", DEFAULT_SERVER_ERROR_MESSAGE);
-                }
-            }
+            Config serverConfig = requireValue(config, "server");
+            requireOnlyKeys(serverConfig, "[server]", "enable");
+            boolean loadedEnable = requireValue(serverConfig, "enable");
+
+            Config messages = requireValue(config, "messages");
+            requireOnlyKeys(messages, "[messages]", "no_mod", "wrong_version", "server_error");
+            String loadedNoModMessage = requireValue(messages, "no_mod");
+            String loadedWrongVersionMessage = requireValue(messages, "wrong_version");
+            String loadedServerErrorMessage = requireValue(messages, "server_error");
+
+            version = loadedVersion;
+            enable = loadedEnable;
+            noModMessage = loadedNoModMessage;
+            wrongVersionMessage = loadedWrongVersionMessage;
+            serverErrorMessage = loadedServerErrorMessage;
+
             LOGGER.debug("Configuration loaded: checking enabled={}, version={}", enable, version);
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to load, configuration invalid", e);
+            LOGGER.error("Failed to load configuration", e);
             return 0;
+        }
+    }
+
+    private static <T> T requireValue(Config config, String path) {
+        T value = config.get(path);
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required configuration value: " + path);
+        }
+        return value;
+    }
+
+    private static void requireOnlyKeys(Config config, String section, String... allowedKeys) {
+        Set<String> unknownKeys = new TreeSet<>(config.valueMap().keySet());
+        unknownKeys.removeAll(Set.of(allowedKeys));
+        if (!unknownKeys.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Unknown configuration key(s) in " + section + ": " + String.join(", ", unknownKeys)
+            );
         }
     }
     
