@@ -61,24 +61,34 @@ public final class ConfigMigrator {
             String serverError = messageValue(messages, "server_error", ConfigManager.DEFAULT_SERVER_ERROR_MESSAGE);
 
             String migrated = """
-                    # Modpack Checker Configuration
-                    # This file was migrated from server and client configuration, it contains both
-
-                    version = %s
-                    enable_server = %s
-                    enable_lan = false
-
-                    [messages]
-                    no_mod = %s
-                    wrong_version = %s
-                    server_error = %s
-                    """.formatted(
-                        quote(version),
-                        enabled,
-                        quote(noMod),
-                        quote(wrongVersion),
-                        quote(serverError)
-                    );
+                # Modpack Checker Configuration
+                # This file was migrated from server and client configuration, it contains both
+                
+                # Modpack version of the server and client, that must match
+                # version "development" always allows joining
+                version = %s
+                
+                # Enable or disable modpack version checking
+                enable_server = %s
+                enable_lan = false
+                
+                # Kick messages for different scenarios
+                [messages]
+                # Message shown when client doesn't have the mod installed
+                no_mod = %s
+                
+                # Message shown when client has wrong version (use {version} as placeholder)
+                wrong_version = %s
+                
+                # Message shown when there's a server configuration error
+                server_error = %s
+                """.formatted(
+                    quote(version),
+                    enabled,
+                    quote(noMod),
+                    quote(wrongVersion),
+                    quote(serverError)
+                );
 
             Files.writeString(temporary, migrated);
             if (!isValid(temporary, version, enabled, noMod, wrongVersion, serverError)) {
