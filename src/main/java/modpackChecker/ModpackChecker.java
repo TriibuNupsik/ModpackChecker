@@ -43,7 +43,7 @@ public class ModpackChecker implements ModInitializer {
         dispatcher.register(CommandManager.literal("modpackchecker-reload")
             .requires(source -> source.hasPermissionLevel(2))
             .executes(context -> {
-                ConfigManager.returnReason result = ConfigManager.loadConfig();
+                ConfigManager.ReturnReason result = ConfigManager.loadConfig();
 
                 switch (result) {
                     case SUCCESS:

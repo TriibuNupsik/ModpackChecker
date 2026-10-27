@@ -19,7 +19,7 @@ import java.util.TreeSet;
 import static modpackChecker.ModpackChecker.LOGGER;
 
 public class ConfigManager {
-    public enum returnReason {
+    public enum ReturnReason {
         UNKNOWN,
         SUCCESS,
         MISSING_CONFIG,
@@ -27,17 +27,17 @@ public class ConfigManager {
     }
 
     // Config folder constants
-    private static final Path CONFIG_DIR = FabricLoader.getInstance().getGameDir().resolve("config");
+    static final Path CONFIG_DIR = FabricLoader.getInstance().getGameDir().resolve("config");
     private static final Path CONFIG_PATH = CONFIG_DIR.resolve("modpack-checker.toml");
 
     // Default configuration values
-    private static final String DEFAULT_VERSION = "1.0.0";
+    static final String DEFAULT_VERSION = "1.0.0";
     private static final String DEV_VERSION = "development";
-    private static final boolean DEFAULT_ENABLE_SERVER = true;
-    private static final boolean DEFAULT_ENABLE_LAN = true;
-    private static final String DEFAULT_NO_MOD_MESSAGE = "Modpack not installed! \\n\\n Please install the modpack, version \\\"{version}\\\" \\n <your-modpack-link>";
-    private static final String DEFAULT_WRONG_VERSION_MESSAGE = "Wrong modpack version installed! \\n\\n Please install the modpack version \\\"{version}\\\" \\n <your-modpack-link>";
-    private static final String DEFAULT_SERVER_ERROR_MESSAGE = "Server configuration error. Please contact an administrator.";
+    static final boolean DEFAULT_ENABLE_SERVER = true;
+    static final boolean DEFAULT_ENABLE_LAN = true;
+    static final String DEFAULT_NO_MOD_MESSAGE = "Modpack not installed! \\n\\n Please install the modpack, version \\\"{version}\\\" \\n <your-modpack-link>";
+    static final String DEFAULT_WRONG_VERSION_MESSAGE = "Wrong modpack version installed! \\n\\n Please install the modpack version \\\"{version}\\\" \\n <your-modpack-link>";
+    static final String DEFAULT_SERVER_ERROR_MESSAGE = "Server configuration error. Please contact an administrator.";
 
     // Server configuration
     public static boolean enableServer = DEFAULT_ENABLE_SERVER;
@@ -102,16 +102,16 @@ public class ConfigManager {
         LOGGER.info("Created default configuration file");
     }
 
-    public static returnReason loadConfig() {
+    public static ReturnReason loadConfig() {
         if (!Files.exists(CONFIG_PATH)) {
             LOGGER.error("Configuration file not found: {}", CONFIG_PATH);
-            return returnReason.MISSING_CONFIG;
+            return ReturnReason.MISSING_CONFIG;
         }
         try (FileConfig config = FileConfig.of(CONFIG_PATH, TomlFormat.instance())) {
             config.load();
 
             if (isConfigBroken(config, "root", "version", "enable_server", "enable_lan", "messages")) {
-                return returnReason.BROKEN_CONFIG;
+                return ReturnReason.BROKEN_CONFIG;
             }
             String loadedVersion = config.get("version");
             boolean loadedEnableServer = config.get("enable_server");
@@ -119,7 +119,7 @@ public class ConfigManager {
 
             Config messages = config.get("messages");
             if (isConfigBroken(messages, "[messages]", "no_mod", "wrong_version", "server_error")) {
-                return returnReason.BROKEN_CONFIG;
+                return ReturnReason.BROKEN_CONFIG;
             }
             String loadedNoModMessage = messages.get("no_mod");
             String loadedWrongVersionMessage = messages.get("wrong_version");
@@ -133,12 +133,12 @@ public class ConfigManager {
             serverErrorMessage = loadedServerErrorMessage;
 
             LOGGER.debug("Configuration loaded: checking enabled={}, version={}", enableServer, version);
-            return returnReason.SUCCESS;
+            return ReturnReason.SUCCESS;
         } catch (Exception e) {
             String reason = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
             LOGGER.error("Failed to read configuration: {} Keeping the previous configuration.", reason);
             LOGGER.error("Configuration reload failure", e);
-            return returnReason.UNKNOWN;
+            return ReturnReason.UNKNOWN;
         }
     }
 

@@ -15,12 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import static modpackChecker.ConfigManager.CONFIG_DIR;
 import static modpackChecker.ModpackChecker.LOGGER;
 
 /** Converts the separate legacy client/server files to the unified configuration. */
 public final class ConfigMigrator {
-    private static final Path CONFIG_DIR = net.fabricmc.loader.api.FabricLoader.getInstance()
-            .getGameDir().resolve("config");
     private static final Path NEW_CONFIG = CONFIG_DIR.resolve("modpack-checker.toml");
     private static final Path CLIENT_CONFIG = CONFIG_DIR.resolve("modpack-checker-client.toml");
     private static final Path SERVER_CONFIG = CONFIG_DIR.resolve("modpack-checker-server.toml");
@@ -44,7 +43,9 @@ public final class ConfigMigrator {
 
             // The server's expected version is authoritative when both old files exist.
             String version = stringValue(server, "expected_version");
-            if (version == null) version = stringValue(client, "version");
+            if (version == null) {
+                version = stringValue(client, "version");
+            }
             if (version == null) {
                 throw new IOException("Neither legacy config contains a version value");
             }
@@ -55,9 +56,9 @@ public final class ConfigMigrator {
             }
 
             Config messages = server == null ? null : server.get("messages");
-            String noMod = messageValue(messages, "no_mod", "Modpack not installed! \\n\\n Please install the modpack, version \\\"{version}\\\" \\n <your-modpack-link>");
-            String wrongVersion = messageValue(messages, "wrong_version", "Wrong modpack version installed! \\n\\n Please install the modpack version \\\"{version}\\\" \\n <your-modpack-link>");
-            String serverError = messageValue(messages, "server_error", "Server configuration error. Please contact an administrator.");
+            String noMod = messageValue(messages, "no_mod", ConfigManager.DEFAULT_NO_MOD_MESSAGE);
+            String wrongVersion = messageValue(messages, "wrong_version", ConfigManager.DEFAULT_WRONG_VERSION_MESSAGE);
+            String serverError = messageValue(messages, "server_error", ConfigManager.DEFAULT_SERVER_ERROR_MESSAGE);
 
             String migrated = """
                     # Modpack Checker Configuration
@@ -71,7 +72,13 @@ public final class ConfigMigrator {
                     no_mod = %s
                     wrong_version = %s
                     server_error = %s
-                    """.formatted(quote(version), enabled, quote(noMod), quote(wrongVersion), quote(serverError));
+                    """.formatted(
+                        quote(version),
+                        enabled,
+                        quote(noMod),
+                        quote(wrongVersion),
+                        quote(serverError)
+                    );
 
             Files.writeString(temporary, migrated);
             if (!isValid(temporary, version, enabled, noMod, wrongVersion, serverError)) {
