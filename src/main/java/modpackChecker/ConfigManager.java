@@ -53,7 +53,12 @@ public class ConfigManager {
                 Files.createDirectories(CONFIG_DIR);
             } // Create config directory if it doesn't exist
             if (!Files.exists(CONFIG_PATH)) {
-                copyDefaultConfig();
+                if (!ConfigMigrator.migrateIfNeeded()) {
+                    return;
+                }
+                if (!Files.exists(CONFIG_PATH)) {
+                    copyDefaultConfig();
+                }
             } // Copy default config file if it doesn't exist
 
             loadConfig();
@@ -100,7 +105,6 @@ public class ConfigManager {
     public static returnReason loadConfig() {
         if (!Files.exists(CONFIG_PATH)) {
             LOGGER.error("Configuration file not found: {}", CONFIG_PATH);
-            init();
             return returnReason.MISSING_CONFIG;
         }
         try (FileConfig config = FileConfig.of(CONFIG_PATH, TomlFormat.instance())) {
